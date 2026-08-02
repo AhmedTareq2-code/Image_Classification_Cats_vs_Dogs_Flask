@@ -4,11 +4,13 @@ from PIL import Image
 from flask import Flask, request, render_template, jsonify
 
 try:
-    # Lightweight interpreter — preferred for serverless deployments (e.g. Vercel)
-    from tflite_runtime.interpreter import Interpreter
+    # ai-edge-litert — the maintained, lightweight interpreter used in
+    # requirements.txt for this project (successor to tflite-runtime),
+    # good fit for serverless deployments like Vercel
+    from ai_edge_litert.interpreter import Interpreter
 except ImportError:
     # Falls back to the interpreter bundled with full TensorFlow if
-    # tflite-runtime isn't installed (e.g. local dev)
+    # ai-edge-litert isn't installed (e.g. local dev)
     from tensorflow.lite.python.interpreter import Interpreter
 
 app = Flask(__name__)
