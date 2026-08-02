@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cats vs Dogs Classifier</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root {
+    --bg: #0e1117;
+    --card: #1a1d24;
+    --border: #30333d;
+    --text: #fafafa;
+    --text-muted: #a3a8b8;
+    --accent: #3b82f6;
+    --accent-bar: #2563eb;
+    --info-bg: #12233d;
+    --info-border: #1c3d66;
+    --info-text: #6cb1ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    padding: 48px 16px 24px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .subtitle {
+    color: var(--text);
+    font-size: 1.05rem;
+    margin: 0 0 28px;
+  }
+
+  .field-label {
+    font-size: .95rem;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  /* upload dropzone */
+  .upload-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+  }
+  .upload-btn {
+    background: transparent;
+    border: 1px solid #4b4f5a;
+    color: var(--text);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: .9rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+  .upload-hint { color: var(--text-muted); font-size: .85rem; }
+  input[type="file"] { display: none; }
+
+  /* selected file chip */
+  .file-chip {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    margin-top: 14px;
+  }
+  .file-chip .thumb {
+    width: 32px; height: 32px;
+    background: #2a2e38;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+  }
+  .file-chip .meta { flex: 1; min-width: 0; }
+  .file-chip .fname { font-size: .9rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-chip .fsize { font-size: .78rem; color: var(--text-muted); }
+  .file-chip .remove {
+    cursor: pointer; color: var(--text-muted); background: none; border: none;
+    font-size: 1.1rem; line-height: 1;
+  }
+  .file-chip .remove:hover { color: var(--text); }
+
+  /* info banner (idle state) */
+  .info-banner {
+    margin-top: 20px;
+    background: var(--info-bg);
+    border: 1px solid var(--info-border);
+    color: var(--info-text);
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: .95rem;
+  }
+
+  .error-banner {
+    margin-top: 20px;
+    background: #3d1414;
+    border: 1px solid #661c1c;
+    color: #ff8a8a;
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: .9rem;
+    display: none;
+  }
+
+  /* results layout */
+  .results {
+    display: none;
+    margin-top: 28px;
+    gap: 32px;
+    grid-template-columns: 1fr 1fr;
+  }
+  @media (max-width: 620px) {
+    .results { grid-template-columns: 1fr; }
+  }
+  .results img {
+    width: 100%;
+    border-radius: 8px;
+    display: block;
+  }
+  .img-caption {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: .8rem;
+    margin-top: 8px;
+  }
+  .pred-col h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 4px 0 16px;
+  }
+  .bar-bg {
+    background: #262a33;
+    border-radius: 6px;
+    height: 8px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    background: var(--accent-bar);
+    height: 100%;
+    width: 0%;
+    transition: width .5s ease;
+  }
+  .confidence-text {
+    margin-top: 10px;
+    font-size: .95rem;
+    color: var(--text);
+  }
+  .low-conf {
+    margin-top: 10px;
+    font-size: .85rem;
+    color: var(--text-muted);
+    display: none;
+  }
+
+  .predict-btn {
+    margin-top: 16px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: .9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: none;
+  }
+  .predict-btn:disabled { opacity: .6; cursor: not-allowed; }
+
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 40px 0 16px;
+  }
+  footer {
+    color: var(--text-muted);
+    font-size: .8rem;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🐾 Cats vs Dogs Classifier</h1>
+  <p class="subtitle">Upload a photo of a cat or a dog, and the model will predict which one it is.</p>
+
+  <div class="field-label">Choose an image</div>
+
+  <label class="upload-box" id="dropArea">
+    <span class="upload-btn">⬆ Upload</span>
+    <span class="upload-hint">200MB per file • JPG, PNG, WEBP</span>
+    <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.webp">
+  </label>
+
+  <div class="file-chip" id="fileChip">
+    <div class="thumb">🖼️</div>
+    <div class="meta">
+      <div class="fname" id="fileName"></div>
+      <div class="fsize" id="fileSize"></div>
+    </div>
+    <button class="remove" id="removeFile">✕</button>
+  </div>
+
+  <button class="predict-btn" id="predictBtn">Predict</button>
+
+  <div class="info-banner" id="infoBanner">Upload an image above to get a prediction.</div>
+  <div class="error-banner" id="errorBanner"></div>
+
+  <div class="results" id="results">
+    <div>
+      <img id="preview" alt="Uploaded image">
+      <div class="img-caption">Uploaded image</div>
+    </div>
+    <div class="pred-col">
+      <h2 id="predictionText"></h2>
+      <div class="bar-bg"><div class="bar-fill" id="bar"></div></div>
+      <div class="confidence-text" id="confidenceText"></div>
+      <div class="low-conf" id="lowConf">⚠️ Low confidence — the model isn't very sure about this one.</div>
+    </div>
+  </div>
+
+  <hr>
+  <footer>CNN model trained on the Kaggle Cats vs Dogs dataset · Developed by: Ahmed Tareq</footer>
+</div>
+
+<script>
+const fileInput = document.getElementById('fileInput');
+const fileChip = document.getElementById('fileChip');
+const fileName = document.getElementById('fileName');
+const fileSize = document.getElementById('fileSize');
+const removeFile = document.getElementById('removeFile');
+const predictBtn = document.getElementById('predictBtn');
+const infoBanner = document.getElementById('infoBanner');
+const errorBanner = document.getElementById('errorBanner');
+const results = document.getElementById('results');
+const preview = document.getElementById('preview');
+const predictionText = document.getElementById('predictionText');
+const bar = document.getElementById('bar');
+const confidenceText = document.getElementById('confidenceText');
+const lowConf = document.getElementById('lowConf');
+
+let selectedFile = null;
+
+function formatSize(bytes) {
+  const mb = bytes / (1024 * 1024);
+  return mb >= 1 ? `${mb.toFixed(1)}MB` : `${(bytes / 1024).toFixed(0)}KB`;
+}
+
+function resetResults() {
+  results.style.display = 'none';
+  errorBanner.style.display = 'none';
+  errorBanner.textContent = '';
+}
+
+fileInput.addEventListener('change', () => {
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  selectedFile = file;
+  fileName.textContent = file.name;
+  fileSize.textContent = formatSize(file.size);
+  fileChip.style.display = 'flex';
+  infoBanner.style.display = 'none';
+  predictBtn.style.display = 'inline-block';
+  resetResults();
+
+  runPrediction();
+});
+
+removeFile.addEventListener('click', () => {
+  selectedFile = null;
+  fileInput.value = '';
+  fileChip.style.display = 'none';
+  predictBtn.style.display = 'none';
+  infoBanner.style.display = 'block';
+  resetResults();
+});
+
+predictBtn.addEventListener('click', runPrediction);
+
+async function runPrediction() {
+  if (!selectedFile) return;
+
+  predictBtn.disabled = true;
+  predictBtn.textContent = 'Predicting...';
+  resetResults();
+
+  const reader = new FileReader();
+  reader.onload = e => { preview.src = e.target.result; };
+  reader.readAsDataURL(selectedFile);
+
+  const formData = new FormData();
+  formData.append('image', selectedFile);
+
+  try {
+    const response = await fetch('/predict', { method: 'POST', body: formData });
+    const data = await response.json();
+
+    if (!response.ok) throw new Error(data.error || 'Prediction failed');
+
+    const emoji = data.predicted_class === 'Cat' ? '🐱' : '🐶';
+    predictionText.textContent = `${emoji} Prediction: ${data.predicted_class}`;
+    bar.style.width = `${(data.confidence * 100).toFixed(1)}%`;
+    confidenceText.textContent = `Confidence: ${(data.confidence * 100).toFixed(1)}%`;
+    lowConf.style.display = data.low_confidence ? 'block' : 'none';
+    results.style.display = 'grid';
+  } catch (err) {
+    errorBanner.textContent = err.message;
+    errorBanner.style.display = 'block';
+  } finally {
+    predictBtn.disabled = false;
+    predictBtn.textContent = 'Predict';
+  }
+}
+</script>
+</body>
+</html>
