@@ -1,7 +1,5 @@
-import io
 import numpy as np
 from PIL import Image
-from flask import Flask, request, render_template, jsonify
 
 try:
     # ai-edge-litert — the maintained, lightweight interpreter used in
@@ -13,14 +11,12 @@ except ImportError:
     # ai-edge-litert isn't installed (e.g. local dev)
     from tensorflow.lite.python.interpreter import Interpreter
 
-app = Flask(__name__)
-
 CLASS_NAMES = ["Cat", "Dog"]        # alphabetical folder order — must match training
 IMG_SIZE = (128, 128)               # must match the size used during training
 MODEL_PATH = "cats_dogs_model.tflite"
 
 # ---------------------------------------------------------------------------
-# Load the TFLite model once at startup
+# Load the TFLite model once, at import time
 # ---------------------------------------------------------------------------
 interpreter = Interpreter(model_path=MODEL_PATH)
 interpreter.allocate_tensors()
@@ -44,37 +40,3 @@ def predict(image: Image.Image):
     confidence = prob_dog if predicted_class == "Dog" else 1 - prob_dog
 
     return predicted_class, confidence
-
-
-# ---------------------------------------------------------------------------
-# Routes
-# ---------------------------------------------------------------------------
-@app.route("/", methods=["GET"])
-def index():
-    return render_template("index.html")
-
-
-@app.route("/predict", methods=["POST"])
-def predict_route():
-    if "image" not in request.files:
-        return jsonify({"error": "No image uploaded"}), 400
-
-    file = request.files["image"]
-    if file.filename == "":
-        return jsonify({"error": "No image selected"}), 400
-
-    try:
-        image = Image.open(file.stream)
-        predicted_class, confidence = predict(image)
-    except Exception as exc:
-        return jsonify({"error": f"Could not process image: {exc}"}), 400
-
-    return jsonify({
-        "predicted_class": predicted_class,
-        "confidence": round(confidence, 4),
-        "low_confidence": confidence < 0.6,
-    })
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
