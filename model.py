@@ -15,9 +15,7 @@ CLASS_NAMES = ["Cat", "Dog"]        # alphabetical folder order — must match t
 IMG_SIZE = (128, 128)               # must match the size used during training
 MODEL_PATH = "cats_dogs_model.tflite"
 
-# ---------------------------------------------------------------------------
 # Load the TFLite model once, at import time
-# ---------------------------------------------------------------------------
 interpreter = Interpreter(model_path=MODEL_PATH)
 interpreter.allocate_tensors()
 input_details = interpreter.get_input_details()
